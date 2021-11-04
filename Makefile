@@ -1,8 +1,8 @@
 CFLAGS = -g3 -Wall -Wextra -Wconversion -Wcast-qual -Wcast-align -g
 CFLAGS += -Winline -Wfloat-equal -Wnested-externs
 CFLAGS += -pedantic -std=gnu99 -Werror
-SHHEADERS = parsing.h
-SHFILES = sh.c parsing.c
+SHHEADERS = parsing.h jobs.h
+SHFILES = sh.c parsing.c jobs.c
 EXECS = 33sh 33noprompt
 
 PROMPT = -DPROMPT
@@ -19,8 +19,8 @@ alltest: $(EXECS) tests sanitize
 33noprompt: $(SHFILES) $(SHHEADERS)
 	gcc $(CFLAGS) $(SHFILES) -o $@
 
-tests: ./cs0330_shell_1_test 33noprompt ./shell_1_tests
-	./$< -s 33noprompt -u ./shell_1_tests
+tests: ./cs0330_shell_2_test 33noprompt
+	./$< -s 33noprompt -p -q
 
 sanitize: ./cs0330_cleanup_shell
 	$<
