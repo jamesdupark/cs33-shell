@@ -157,7 +157,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
             }
         }
 
-        if (!strncmp(argv[0], '/', 1)) {
+        if (!strncmp(argv[0], "/", 1)) {
             (argv[0])++;  // remove starting '/' from argv[0]
         }
 
