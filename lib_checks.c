@@ -57,7 +57,7 @@ void checked_open(const char *pathname, int flags, mode_t mode) {
  *              signal(). Check man signal for more info on the library function
  * 
  */
-void checked_signal(int signum, sighandler_t handler) {
+void checked_signal(int signum, void handler) {
     if (signal(signum, handler) == SIG_ERR) {
         perror("signal");
         exit(1);

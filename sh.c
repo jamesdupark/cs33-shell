@@ -25,7 +25,7 @@
  * and SIGTTOU to default
  *
  */
-void change_def_handlers(sighandler_t handler) {
+void change_def_handlers(void handler) {
     checked_signal(SIGINT, handler);
     checked_signal(SIGTSTP, handler);
     checked_signal(SIGTTTOU, handler);
@@ -125,7 +125,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        if (tcsetgrp(STDIN_FILENO, pid); < 0) {
+        if (tcsetgrp(STDIN_FILENO, pid) < 0) {
             perror("tcsetgrp");
             exit(1);
         }
