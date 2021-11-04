@@ -118,6 +118,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
         change_def_handlers(SIG_DFL);
 
         // change pgid
+        pid = getpid();
         if (setpgid(pid, pid) < 0) {
             perror("setpgid");
             exit(1);
