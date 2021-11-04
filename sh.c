@@ -28,7 +28,7 @@
 void change_def_handlers(void (*handler)) {
     checked_signal(SIGINT, handler);
     checked_signal(SIGTSTP, handler);
-    checked_signal(SIGTTTOU, handler);
+    checked_signal(SIGTTOU, handler);
 }
 
 /*
