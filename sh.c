@@ -25,7 +25,7 @@
  * and SIGTTOU to default
  *
  */
-void change_def_handlers(void handler) {
+void change_def_handlers(void (*handler)) {
     checked_signal(SIGINT, handler);
     checked_signal(SIGTSTP, handler);
     checked_signal(SIGTTTOU, handler);
