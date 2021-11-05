@@ -12,7 +12,8 @@
 #include "jobs.h"
 
 // initialize our job list
-job_list_t *my_jobs = init_job_list();
+job_list_t *my_jobs;
+my_jobs = init_job_list;
 
 
 
