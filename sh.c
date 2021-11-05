@@ -117,7 +117,7 @@ int exec_builtins(char *argv[512], int argc) {
  */
 int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
     pid_t pid;
-    int status;
+    int status = argc;
 
     if ((pid = fork()) == 0) {  // start child process
         // change pgid
@@ -133,7 +133,6 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
         // TODO: if (!command ends with & symbol)
         // if (strncmp(argv[argc], "&", 2)) { // job is set to run in foreground 
             checked_setpgrp(pid);
-            char * a = argv[argc];
         // } // else { // set job up in background
 
 
