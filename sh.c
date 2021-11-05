@@ -13,7 +13,6 @@
 
 // initialize our job list
 job_list_t *my_jobs;
-my_jobs = init_job_list;
 
 
 
@@ -208,6 +207,8 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
  *          ">>".
  */
 int main() {
+
+    my_jobs = init_job_list();
 
     do {
         // setting up default signal behaviors for our shell
