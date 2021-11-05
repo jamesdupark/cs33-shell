@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
-#include "jobs.h"
-#include "sh.c"
 
 job_list_t jobs;
 
