@@ -114,12 +114,11 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     int status;
 
     if ((pid = fork()) == 0) {  // start child process
-        // reset signal handlers to default
-        change_def_handlers(SIG_DFL);
-        
         // change pgid
-        pid = getpid();
-        if (setpgid(pid, pid) < 0) {
+        if (pid = getpid() < 0) {
+            perror("getpid");
+            exit(1);
+        } else if (setpgid(pid, pid) < 0) {
             perror("setpgid");
             exit(1);
         }
@@ -131,6 +130,8 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
 
         // later... set up other signal handlers?
+        // reset signal handlers to default
+        change_def_handlers(SIG_DFL);
 
 
         // set up redirection
@@ -174,7 +175,12 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     // status checking?
 
 
-    pid_t old = getpgid(pid);
+    pid_t old;
+    if (old = getpgid(pid) < 0) {
+        perror("getpgid");
+        return -1;
+    }
+
     checked_setpgrp(old);
 
     return 0;
