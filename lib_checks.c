@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
+#include "jobs.h"
+#include "sh.c"
 
-
+job_list_t jobs;
 
 /*
  * checked_close()
@@ -60,6 +62,7 @@ void checked_open(const char *pathname, int flags, mode_t mode) {
 void checked_signal(int signum, __sighandler_t handler) {
     if (signal(signum, handler) == SIG_ERR) {
         perror("signal");
+        cleanup_job_list(jobs);
         exit(1);
     }
 }
@@ -79,6 +82,7 @@ void checked_signal(int signum, __sighandler_t handler) {
 void checked_setpgrp(pid_t pgrp) {
     if (tcsetpgrp(STDIN_FILENO, pgrp) < 0) {
         perror("tcsetgrp");
+        cleanup_job_list(jobs);
         exit(1);
     }
 }

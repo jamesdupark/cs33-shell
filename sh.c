@@ -11,6 +11,10 @@
 #include "lib_checks.c"
 #include "jobs.h"
 
+// initialize our job list
+job_list_t *jobs = init_job_list();
+
+
 
 /*
  * change_def_handlers()
@@ -56,6 +60,7 @@ int exec_builtins(char *argv[512], int argc) {
 
     // builtin recognized as exit
     if (!strncmp(cmd, "exit", 5)) {
+        cleanup_job_list(jobs);
         exit(0);
 
         // builtin recognized as cd
@@ -98,10 +103,11 @@ int exec_builtins(char *argv[512], int argc) {
  * - Description: Attempts to run execv within a child process with the given
  * argv. Supports i/o redirection.
  *
- * - Arguments: argv: array of pointers to parsed arguments, tokens: array of
- * pointers to parsed tokens (including redirection symbols and files), redir:
- * array of ints indicating the index of the redirection file for input, output,
- * or appending respectively within the tokens array.
+ * - Arguments: argv: array of pointers to parsed arguments, argc: the number of
+ * arguments in argv, tokens: array of pointers to parsed tokens (including 
+ * redirection symbols and files), redir: array of ints indicating the index of 
+ * the redirection file for input, output, or appending respectively within the 
+ * tokens array.
  *
  * - Usage: argv[0] should contain the name of the binary file to be executed,
  * preceded by a "/" (to prevent conflict with builtins with the same name).
@@ -109,14 +115,14 @@ int exec_builtins(char *argv[512], int argc) {
  * question. If redirects are desired, tokens should contain the input, output,
  * and/or append filepaths at the indices specified in redir.
  */
-int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
+int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
     pid_t pid;
     int status;
 
     if ((pid = fork()) == 0) {  // start child process
         // change pgid
         if ((pid = getpid()) < 0) {
-            perror("getpid");
+            perror("getpid"); // no need to clean up job list in child process
             exit(1);
         } else if (setpgid(pid, pid) < 0) {
             perror("setpgid");
@@ -125,6 +131,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
+        
         checked_setpgrp(pid);
 
 
@@ -200,9 +207,6 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
  *          ">>".
  */
 int main() {
-    
-    
-
 
     do {
         // setting up default signal behaviors for our shell
@@ -228,8 +232,10 @@ int main() {
         ssize_t rd_state;
         if ((rd_state = read(STDIN_FILENO, buf, 1024)) < 0) {
             perror("read");
+            cleanup_job_list(jobs);
             return 1;
         } else if (rd_state == 0) {  // only ctrl + D was entered
+            cleanup_job_list(jobs);
             return 0;
         }
 
