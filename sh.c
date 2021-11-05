@@ -262,7 +262,7 @@ int main() {
         // execute builtins
         if (exec_builtins(argv, argc) < 0) {
             // if argv[0] not a builtin: attempt to execute program
-            run_prog(argv, tokens, redir);
+            run_prog(argv, argc, tokens, redir);
         }
 
     } while (1);  // continues until ctrl+D is pressed or other fatal error
