@@ -12,7 +12,7 @@
 #include "jobs.h"
 
 // initialize our job list
-job_list_t *jobs = init_job_list();
+job_list_t *my_jobs = init_job_list();
 
 
 
@@ -60,7 +60,7 @@ int exec_builtins(char *argv[512], int argc) {
 
     // builtin recognized as exit
     if (!strncmp(cmd, "exit", 5)) {
-        cleanup_job_list(jobs);
+        cleanup_job_list(my_jobs);
         exit(0);
 
         // builtin recognized as cd
@@ -223,6 +223,7 @@ int main() {
 // prompt user input
 #ifdef PROMPT
         if (write(STDOUT_FILENO, "mysh> ", 6) < 0) {
+            cleanup_job_list(my_jobs);
             perror("write");
             return 1;
         }
@@ -232,10 +233,10 @@ int main() {
         ssize_t rd_state;
         if ((rd_state = read(STDIN_FILENO, buf, 1024)) < 0) {
             perror("read");
-            cleanup_job_list(jobs);
+            cleanup_job_list(my_jobs);
             return 1;
         } else if (rd_state == 0) {  // only ctrl + D was entered
-            cleanup_job_list(jobs);
+            cleanup_job_list(my_jobs);
             return 0;
         }
 

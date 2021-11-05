@@ -19,6 +19,7 @@ job_list_t *jobs;
 void checked_close(int fd) {
     if (close(fd) < 0) {
         perror("close");
+        cleanup_job_list(my_jobs);
         exit(1);
     }
 }
@@ -39,6 +40,7 @@ void checked_close(int fd) {
 void checked_open(const char *pathname, int flags, mode_t mode) {
     if (open(pathname, flags, mode) < 0) {
         perror("open");
+        cleanup_job_list(my_jobs);
         exit(1);
     }
 }
@@ -61,7 +63,7 @@ void checked_open(const char *pathname, int flags, mode_t mode) {
 void checked_signal(int signum, __sighandler_t handler) {
     if (signal(signum, handler) == SIG_ERR) {
         perror("signal");
-        cleanup_job_list(jobs);
+        cleanup_job_list(my_jobs);
         exit(1);
     }
 }
@@ -81,7 +83,7 @@ void checked_signal(int signum, __sighandler_t handler) {
 void checked_setpgrp(pid_t pgrp) {
     if (tcsetpgrp(STDIN_FILENO, pgrp) < 0) {
         perror("tcsetgrp");
-        cleanup_job_list(jobs);
+        cleanup_job_list(my_jobs);
         exit(1);
     }
 }
