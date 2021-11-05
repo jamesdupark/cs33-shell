@@ -114,6 +114,9 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     int status;
 
     if ((pid = fork()) == 0) {  // start child process
+        // reset signal handlers to default
+        change_def_handlers(SIG_DFL);
+        
         // change pgid
         if (pid = getpid() < 0) {
             perror("getpid");
@@ -130,8 +133,6 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
 
         // later... set up other signal handlers?
-        // reset signal handlers to default
-        change_def_handlers(SIG_DFL);
 
 
         // set up redirection
