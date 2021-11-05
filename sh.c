@@ -191,11 +191,13 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
  */
 int main() {
     
-    // setting up default signal behaviors for our shell
-    change_def_handlers(SIG_IGN);
+    
 
 
     do {
+        // setting up default signal behaviors for our shell
+        change_def_handlers(SIG_IGN);
+
         // set up buffers
         char buf[1024];
         memset(buf, 0, 1024);
