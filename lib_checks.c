@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include "jobs.h"
 
-job_list_t *jobs;
+job_list_t *my_jobs;
 
 /*
  * checked_close()
