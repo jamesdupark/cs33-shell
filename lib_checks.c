@@ -53,13 +53,32 @@ void checked_open(const char *pathname, int flags, mode_t mode) {
  * should be changed, handler: sighandler_t to change the handler for the given
  * signal to (i.e. SIG_DFL, SIG_IGN)
  * 
- * - Usage: automates the error-checking process of the library funciton 
+ * - Usage: automates the error-checking process of the library function 
  *              signal(). Check man signal for more info on the library function
  * 
  */
 void checked_signal(int signum, __sighandler_t handler) {
     if (signal(signum, handler) == SIG_ERR) {
         perror("signal");
+        exit(1);
+    }
+}
+
+/*
+ * checked_setpgrp()
+ * 
+ * - Description: attempts to set process group id to the given pgid using the
+ * tcsetgrp library call. Exits program if it fails.
+ * 
+ * - Arguments: pgrp: id of the process group to transfer control to
+ * 
+ * - Usage: automates the error-checking process of the library function 
+ *              tcscetpgrp(). Check man tcsetpgrp for more info
+ * 
+ */
+void checked_setpgrp(pid_t pgrp) {
+    if (tcsetpgrp(STDIN_FILENO, pgrp) < 0) {
+        perror("tcsetgrp");
         exit(1);
     }
 }

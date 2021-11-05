@@ -112,8 +112,12 @@ int exec_builtins(char *argv[512], int argc) {
 int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     pid_t pid;
     int status;
+    pid_t old = getpgid();
 
     if ((pid = fork()) == 0) {  // start child process
+        // reset signal handlers to default
+        change_def_handlers(SIG_DFL);
+        
         // change pgid
         pid = getpid();
         if (setpgid(pid, pid) < 0) {
@@ -123,16 +127,11 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        if (tcsetpgrp(STDIN_FILENO, pid) < 0) {
-            perror("tcsetgrp");
-            exit(1);
-        }
+        checked_setpgrp(pid);
 
 
 
         // later... set up other signal handlers?
-        // reset signal handlers to default
-        change_def_handlers(SIG_DFL);
 
 
         // set up redirection
@@ -164,6 +163,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
         // execute
         execv(tokens[f_index], argv);
         perror("execv");
+
         exit(1);
     }
 
@@ -171,6 +171,12 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
         perror("wait");
         return -1;
     }
+
+    // status checking?
+
+
+
+    checked_setpgrp(old);
 
     return 0;
 }
