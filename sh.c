@@ -118,7 +118,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
         change_def_handlers(SIG_DFL);
         
         // change pgid
-        if (pid = getpid() < 0) {
+        if ((pid = getpid()) < 0) {
             perror("getpid");
             exit(1);
         } else if (setpgid(pid, pid) < 0) {
@@ -177,7 +177,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
 
 
     pid_t old;
-    if (old = getpgid(pid) < 0) {
+    if ((old = getpgid(pid)) < 0) {
         perror("getpgid");
         return -1;
     }
