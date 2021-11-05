@@ -112,7 +112,6 @@ int exec_builtins(char *argv[512], int argc) {
 int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     pid_t pid;
     int status;
-    pid_t old = getpgid();
 
     if ((pid = fork()) == 0) {  // start child process
         // reset signal handlers to default
@@ -175,7 +174,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[3]) {
     // status checking?
 
 
-
+    pid_t old = getpgid(pid);
     checked_setpgrp(old);
 
     return 0;
