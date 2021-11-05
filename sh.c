@@ -133,6 +133,7 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
         // TODO: if (!command ends with & symbol)
         // if (strncmp(argv[argc], "&", 2)) { // job is set to run in foreground 
             checked_setpgrp(pid);
+            argv[argc];
         // } // else { // set job up in background
 
 
