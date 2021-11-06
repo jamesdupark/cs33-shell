@@ -20,10 +20,10 @@ int handle_signals(int status, pid_t pid, char *cmd) {
     char *act;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
-        int sig = WTERMSIG(status);
+        sig = WTERMSIG(status);
         act = "terminated";
     } else if (WIFSTOPPED(status)) { // process stopped by signal
-        int sig = WSTOPSIG(status);
+        sig = WSTOPSIG(status);
         act = "suspended";
 
         // add job to job list
