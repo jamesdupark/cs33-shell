@@ -16,7 +16,7 @@ job_list_t *my_jobs;
 int next_job = 1;
 
 
-int handle_signals(int status, pid_t pid, char *cmd) {
+void handle_signals(int status, pid_t pid, char *cmd) {
     char *act;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
