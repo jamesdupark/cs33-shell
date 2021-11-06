@@ -32,26 +32,26 @@ int next_job = 1;
  * it.
  */
 void handle_signals(int status, pid_t pgid, char *cmd) {
-    char act[32];
+    char *act;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
         sig = WTERMSIG(status);
-        snprintf(act, 32, "terminated by signal %d", sig);
+        act = "terminated by signal";
+
+        // delete job from list
+        remove_job_pid(my_jobs, pgid);
     } else if (WIFSTOPPED(status)) { // process stopped by signal
         sig = WSTOPSIG(status);
-        snprintf(act, 32, "suspended by signal %d", sig);
+        act = "suspended by signal";
 
-        // add job to job list
-        add_job(my_jobs, next_job, pgid, STOPPED, cmd);
-    } else if (WIFCONTINUED(signal)) {
-        sig = SIGCONT;
-        snprintf(act, 32, "resumed");
+        // update job
+        update_job_pid(my_jobs, pgid, STOPPED);
     }
 
     if (sig) { // there was some signal sent
         // print message
         char output[64];
-        snprintf(output, 64, "[%d] (%d) %s\n", next_job, pgid, act);
+        snprintf(output, 64, "[%d] (%d) %s %d\n", next_job, pgid, act, sig);
         next_job++;
         checked_stdwrite(output);
     }
@@ -142,7 +142,7 @@ int exec_builtins(char *argv[512], int argc) {
  * run_prog()
  *
  * - Description: Attempts to run execv within a child process with the given
- * argv. Supports i/o redirection. Returns cmd that was attempted to run.
+ * argv. Supports i/o redirection.
  *
  * - Arguments: argv: array of pointers to parsed arguments, tokens: array of 
  * pointers to parsed tokens (including redirection symbols and files), redir: 
@@ -155,7 +155,7 @@ int exec_builtins(char *argv[512], int argc) {
  * question. If redirects are desired, tokens should contain the input, output,
  * and/or append filepaths at the indices specified in redir.
  */
-char *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
+int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     pid_t pid;
     int status;
     int bg = redir[3];
@@ -213,10 +213,10 @@ char *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    if (bg) {
-        // add job to job list
-        add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
+    // add job to job list
+    add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
 
+    if (bg) {
         // print job and process id
         char output[32];
         snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
@@ -224,7 +224,7 @@ char *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         checked_stdwrite(output);
     } else {
         checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
-        handle_signals(status, pid, tokens[f_index]);
+        handle_signals(status, pid);
     }
 
     // return terminal control to parent
@@ -237,7 +237,7 @@ char *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
     checked_setpgrp(old);
 
-    return tokens[f_index];
+    return 0;
 }
 
 /*
@@ -306,16 +306,15 @@ int main() {
         }
 
         // execute builtins
-        char *cmd;
         if (exec_builtins(argv, argc) < 0) {
             // if argv[0] not a builtin: attempt to execute program
-            cmd = run_prog(argv, tokens, redir);
+            run_prog(argv, tokens, redir);
         }
 
         pid_t pid;
         int status;
         if ((pid = checked_waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
-            handle_signals(status, pid, cmd);
+            handle_signals(status, pid);
         }
 
     } while (1);  // continues until ctrl+D is pressed or other fatal error
