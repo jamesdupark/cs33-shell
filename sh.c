@@ -70,7 +70,7 @@ void reap(int status, pid_t pgid) {
         // remove job from list
         remove_job_pid(my_jobs, pgid);
     } else if (WIFSTOPPED(status)) { // process stopped by signal
-        sig = WSTOPSIG(status);
+        code = WSTOPSIG(status);
         snprintf(act, 32,  "suspended by signal %d", code);
 
         // update job status
