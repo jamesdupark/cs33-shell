@@ -84,6 +84,7 @@ void reap(int status, pid_t pgid) {
     } else if (WIFEXITED(status)) {
         code = WEXITSTATUS(status);
         snprintf(act, 64, "terminated with exit status %d", code);
+        code = 1;
 
         // remove from job list
         remove_job_pid(my_jobs, pgid);
