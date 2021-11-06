@@ -173,7 +173,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    if (!bg) {
+    if (bg) {
         // add job to job list
         add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
 
