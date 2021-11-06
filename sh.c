@@ -141,8 +141,9 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        checked_setpgrp(pid);
-
+        if (!bg) { // give terminal control to foreground processes
+            checked_setpgrp(pid);
+        }
 
         // TODO: later... set up other signal handlers?
         // reset signal handlers to default
