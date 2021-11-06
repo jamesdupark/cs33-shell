@@ -227,7 +227,9 @@ int parse(char buffer[1024], char *tokens[512], char *argv[512], int redir[4]) {
         argv[i] = curr_tok;  // last iteration null-terminates argv
     }
 
-    if (strncmp(argv[i - 2], "&", 2)) redir[3] == 1; // launch process in bg
+    if (strncmp(argv[i - 2], "&", 2)) {
+        redir[3] == 1; // launch process in bg
+    }
 
     return i - 1;  // i = number of elements in argv including final null
 }

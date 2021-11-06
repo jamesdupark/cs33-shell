@@ -123,7 +123,7 @@ void checked_setpgrp(pid_t pgrp) {
  *              waitpid(). Check man waitpid for more info
  * 
  */
-pid_t checked_waitpid(pid_t pid, *int status, int options) {
+pid_t checked_waitpid(pid_t pid, int *status, int options) {
     pid_t ret;
     if ((ret = waitpid(pid, status, options)) < 0) {
         perror("wait");
