@@ -140,12 +140,10 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        if (!bg) { // job is set to run in foreground 
-            checked_setpgrp(pid);
-        } // else { // set job up in background
+        checked_setpgrp(pid);
 
 
-        // later... set up other signal handlers?
+        // TODO: later... set up other signal handlers?
         // reset signal handlers to default
         change_def_handlers(SIG_DFL);
 
@@ -175,6 +173,9 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     }
 
     if (bg) {
+        // add job to job list
+        add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
+
         // print job and process id
         char output[32];
         snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
