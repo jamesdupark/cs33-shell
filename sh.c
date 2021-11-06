@@ -16,6 +16,28 @@ job_list_t *my_jobs;
 int next_job = 1;
 
 
+int handle_signals(int status, pid_t pid, char *cmd) {
+    char *act;
+    int sig = 0; // there is no zero signal
+    if (WIFSIGNALED(status)) { // process terminated by signal
+        int sig = WTERMSIG(status);
+        act = "terminated";
+    } else if (WIFSTOPPED(status)) { // process stopped by signal
+        int sig = WSTOPSIG(status);
+        act = "suspended";
+
+        // add job to job list
+        add_job(my_jobs, next_job, pid, RUNNING, cmd);
+    }
+
+    if (sig) { // there was some signal sent
+        // print message
+        char output[64];
+        snprintf(output, 64, "[%d] (%d) %s by signal %d\n", next_job, pid, act, sig);
+        next_job++;
+        checked_stdwrite(output);
+    }
+}
 
 
 /*
@@ -184,7 +206,8 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         next_job++;
         checked_stdwrite(output);
     } else {
-        checked_waitpid(pid, &status, 0); // TODO: think about other option values?
+        checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
+        handle_signals(status, pid, tokens[f_index]);
     }
 
     // return terminal control to parent
