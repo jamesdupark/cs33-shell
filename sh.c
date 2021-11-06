@@ -15,8 +15,23 @@
 job_list_t *my_jobs;
 int next_job = 1;
 
-
-void handle_signals(int status, pid_t pid, char *cmd) {
+/*
+ * handle_signals()
+ * 
+ * - Description: Handles asynchronous signals sent to child processes of the
+ * shell by printing an informative message about what the signal was and what
+ * it did
+ * 
+ * - Arguments: status: indicates the status of the child process as set by the
+ * waitpid() function, pid: indicates the id of the child process group in
+ * question, cmd: indicates the command used to create the child process (for
+ * adding to jobs list)
+ * 
+ * - Usage: called after returning from waitpid(). If a child process terminated
+ * or was stopped due to a signal, uses the signal macros to identify and report
+ * it.
+ */
+void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
@@ -27,18 +42,17 @@ void handle_signals(int status, pid_t pid, char *cmd) {
         act = "suspended";
 
         // add job to job list
-        add_job(my_jobs, next_job, pid, RUNNING, cmd);
+        add_job(my_jobs, next_job, pgid, RUNNING, cmd);
     }
 
     if (sig) { // there was some signal sent
         // print message
         char output[64];
-        snprintf(output, 64, "[%d] (%d) %s by signal %d\n", next_job, pid, act, sig);
+        snprintf(output, 64, "[%d] (%d) %s by signal %d\n", next_job, pgid, act, sig);
         next_job++;
         checked_stdwrite(output);
     }
 }
-
 
 /*
  * change_def_handlers()
@@ -206,7 +220,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         next_job++;
         checked_stdwrite(output);
     } else {
-        checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
+        checked_waitpid(pid, &status, WUNTRACED | WNOHANG); // TODO: think about other option values?
         handle_signals(status, pid, tokens[f_index]);
     }
 
