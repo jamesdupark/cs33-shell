@@ -143,6 +143,7 @@ int set_tok(char **tok_ptr, int mode, int i, int *offset, char *tokens[512],
  *      redir[0] contains the index of the input file in tokens
  *      redir[1] contains the index of the output file
  *      redir[2] contains the index of the append file
+ *      redir[3] is reserved for information about process redireciton
  *
  */
 char *handle_redir(char *tok, char *tokens[512], int *offset, int *redir,
@@ -165,7 +166,9 @@ char *handle_redir(char *tok, char *tokens[512], int *offset, int *redir,
  *   array
  *
  * - Arguments: buffer: a char array representing user input, tokens: the
- * tokenized input, argv: the argument array eventually used for execv()
+ * tokenized input, argv: the argument array eventually used for execv(), redir:
+ * array containing information about redirection tokens as well as process
+ * redirection (backgrounding)
  *
  * - Usage:
  *
@@ -184,7 +187,7 @@ char *handle_redir(char *tok, char *tokens[512], int *offset, int *redir,
  *       argv[3] = NULL;
  *
  */
-int parse(char buffer[1024], char *tokens[512], char *argv[512], int redir[3]) {
+int parse(char buffer[1024], char *tokens[512], char *argv[512], int redir[4]) {
     int i = 0;  // indicates current position in tokens/args arrays
 
     // first token
@@ -223,6 +226,8 @@ int parse(char buffer[1024], char *tokens[512], char *argv[512], int redir[3]) {
         tokens[i + offset] = curr_tok;
         argv[i] = curr_tok;  // last iteration null-terminates argv
     }
+
+    if (strncmp(argv[i - 2], "&", 2)): redir[3] == 1; // launch process in bg
 
     return i - 1;  // i = number of elements in argv including final null
 }

@@ -13,6 +13,7 @@
 
 // initialize our job list
 job_list_t *my_jobs;
+int next_job = 1;
 
 
 
@@ -115,9 +116,18 @@ int exec_builtins(char *argv[512], int argc) {
  * question. If redirects are desired, tokens should contain the input, output,
  * and/or append filepaths at the indices specified in redir.
  */
-int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
+int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     pid_t pid;
     int status;
+    int bg = redir[3];
+
+    // find index of full file path in tokens array
+    int f_index = 0;
+    for (int i = 0; i < 3; i++) {
+        if ((redir[i] == 1) || (f_index == 1 && redir[i] == 3)) {
+            f_index += 2;
+        }
+    }
 
     if ((pid = fork()) == 0) {  // start child process
         // change pgid
@@ -131,7 +141,7 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        if (strncmp(argv[argc - 1], "&", 2)) { // job is set to run in foreground 
+        if (!bg) { // job is set to run in foreground 
             checked_setpgrp(pid);
         } // else { // set job up in background
 
@@ -154,14 +164,6 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
             checked_open(tokens[redir[2]], O_WRONLY | O_APPEND | O_CREAT, 0600);
         }
 
-        // find index of full file path in tokens array
-        int f_index = 0;
-        for (int i = 0; i < 3; i++) {
-            if ((redir[i] == 1) || (f_index == 1 && redir[i] == 3)) {
-                f_index += 2;
-            }
-        }
-
         if (!strncmp(argv[0], "/", 1)) {
             (argv[0])++;  // remove starting '/' from argv[0]
         }
@@ -173,13 +175,15 @@ int run_prog(char *argv[512], int argc, char *tokens[512], int redir[3]) {
         exit(1);
     }
 
-    if (waitpid(pid, &status, 0) < 1) {  // wait for child to finish
-        perror("wait");
-        return -1;
+    if (bg) {
+        // print job and process id
+        char output[32];
+        snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
+        next_job++;
+        checked_stdwrite(output);
+    } else {
+        checked_waitpid(pid, &status, 0); // TODO: think about other option values?
     }
-
-    // status checking?
-
 
     pid_t old;
     if ((old = getpgrp()) < 0) {
@@ -224,11 +228,7 @@ int main() {
 
 // prompt user input
 #ifdef PROMPT
-        if (write(STDOUT_FILENO, "mysh> ", 6) < 0) {
-            cleanup_job_list(my_jobs);
-            perror("write");
-            return 1;
-        }
+        checked_stdwrite("mysh> ");
 #endif
 
         // read in commands
@@ -254,7 +254,7 @@ int main() {
         }
 
         // read was successful, parse input
-        int redir[3] = {0, 0, 0};
+        int redir[4] = {0, 0, 0, 0};
         int argc;
         if ((argc = parse(buf, tokens, argv, redir)) < 0) {
             // buf was empty or i/o redirection error was found
