@@ -47,6 +47,8 @@ void handle_signals(int status, pid_t pgid) {
 
         // update job
         update_job_pid(my_jobs, pgid, STOPPED);
+    } else if (WIFEXITED(status)) {
+        remove_job_pid(my_jobs, pgid);
     }
 
     if (sig) { // there was some signal sent
@@ -61,8 +63,6 @@ void reap(int status, pid_t pgid) {
     int code = 0;
     char act[32];
     int job = get_job_jid(my_jobs, pgid);
-    // handle signals we have already implemented checks for
-    handle_signals(status, pgid);
 
     if (WIFCONTINUED(status)) {
         code = 1;
@@ -82,7 +82,10 @@ void reap(int status, pid_t pgid) {
         char output[64];
         snprintf(output, 64, "[%d] (%d) %s\n", job, pgid, act);
         checked_stdwrite(output);
-    }    
+    }
+
+    // handle signals we have already implemented checks for
+    handle_signals(status, pgid);
 }
 
 /*
