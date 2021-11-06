@@ -67,9 +67,15 @@ void reap(int status, pid_t pgid) {
     if (WIFCONTINUED(status)) {
         code = 1;
         snprintf(act, 16, "resumed");
+
+        // update status in job list
+        update_job_pid(my_jobs, pgid, RUNNING);
     } else if (WIFEXITED(status)) {
         code = WEXITSTATUS(status);
         snprintf(act, 32, "terminated with exit status %d", code);
+
+        // remove from job list
+        remove_job_pid(my_jobs, pgid);
     }
 
     if (code) {
