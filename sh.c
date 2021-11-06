@@ -124,7 +124,7 @@ int exec_builtins(char *argv[512], int argc) {
     // builtin recognized as exit
     if (!strncmp(cmd, "exit", 5)) {
         if (argc != 1) {
-            write(STDERR_FILENO, "exit: syntax error");
+            write(STDERR_FILENO, "exit: syntax error\n", 20);
         } else {
             cleanup_job_list(my_jobs);
             exit(0);
