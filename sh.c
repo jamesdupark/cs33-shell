@@ -58,7 +58,7 @@ void handle_signals(int status, pid_t pgid) {
 }
 
 void reap(int status, pid_t pgid) {
-    int code;
+    int code = 0;
     char act[32];
     int job = get_job_jid(my_jobs, pgid);
     // handle signals we have already implemented checks for
@@ -348,7 +348,7 @@ int main() {
 
         pid_t pid;
         int status;
-        if ((pid = checked_waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
+        if ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
             reap(status, pid);
         }
 
