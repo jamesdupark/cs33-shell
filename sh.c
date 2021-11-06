@@ -31,7 +31,7 @@ int next_job = 1;
  * or was stopped due to a signal, uses the signal macros to identify and report
  * it.
  */
-void handle_signals(int status, pid_t pgid, char *cmd) {
+void handle_signals(int status, pid_t pgid) {
     char *act;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
