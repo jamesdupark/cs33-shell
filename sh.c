@@ -90,8 +90,8 @@ void reap(int status, pid_t pgid) {
     }
 
     if (code) {
-        char output[64];
-        snprintf(output, 64, "[%d] (%d) %s\n", job, pgid, act);
+        char output[128];
+        snprintf(output, 128, "[%d] (%d) %s\n", job, pgid, act);
         checked_stdwrite(output);
     }
 }
