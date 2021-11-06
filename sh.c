@@ -33,6 +33,7 @@ int next_job = 1;
  */
 void handle_signals(int status, pid_t pgid) {
     char *act;
+    int job = get_job_jid(my_jobs, pgid);
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
         sig = WTERMSIG(status);
@@ -51,10 +52,31 @@ void handle_signals(int status, pid_t pgid) {
     if (sig) { // there was some signal sent
         // print message
         char output[64];
-        snprintf(output, 64, "[%d] (%d) %s %d\n", next_job, pgid, act, sig);
-        next_job++;
+        snprintf(output, 64, "[%d] (%d) %s %d\n", job, pgid, act, sig);
         checked_stdwrite(output);
     }
+}
+
+void reap(int status, pid_t pgid) {
+    int code;
+    char act[32];
+    int job = get_job_jid(my_jobs, pgid);
+    // handle signals we have already implemented checks for
+    handle_signals(status, pgid);
+
+    if (WIFCONTINUED(status)) {
+        code = 1;
+        snprintf(act, 16, "resumed");
+    } else if (WIFEXITED(status)) {
+        code = WEXITSTATUS(status);
+        snprintf(act, 32, "terminated with exit status %d", code);
+    }
+
+    if (code) {
+        char output[64];
+        snprintf(output, 64, "[%d] (%d) %s\n", job, pgid, act);
+        checked_stdwrite(output);
+    }    
 }
 
 /*
@@ -101,12 +123,16 @@ int exec_builtins(char *argv[512], int argc) {
 
     // builtin recognized as exit
     if (!strncmp(cmd, "exit", 5)) {
-        cleanup_job_list(my_jobs);
-        exit(0);
+        if (argc != 1) {
+            write(STDERR_FILENO, "exit: syntax error");
+        } else {
+            cleanup_job_list(my_jobs);
+            exit(0);
+        }
 
         // builtin recognized as cd
     } else if (!strncmp(cmd, "cd", 3)) {
-        if (argc < 2) {  // no filepath to cd
+        if (argc != 2) {  // no filepath to cd
             write(STDERR_FILENO, "cd: syntax error\n", 17);
         } else if (chdir(argv[1]) < 0) {  // chdir errors
             perror("cd");
@@ -114,7 +140,7 @@ int exec_builtins(char *argv[512], int argc) {
 
         // builtin recognized as ln
     } else if (!strncmp(cmd, "ln", 3)) {
-        if (argc < 3) {
+        if (argc != 3) {
             write(STDERR_FILENO, "ln: syntax error\n", 17);
         }
         if (link(argv[1], argv[2]) < 0) {
@@ -123,10 +149,18 @@ int exec_builtins(char *argv[512], int argc) {
 
         // builtin recognized as rm
     } else if (!strncmp(cmd, "rm", 3)) {
-        if (argc < 2) {
+        if (argc != 2) {
             write(STDERR_FILENO, "rm: syntax error\n", 17);
         } else if (unlink(argv[1]) < 0) {
             perror("rm");
+        }
+
+        // builtin recognized as jobs
+    } else if (!strncmp(cmd, "jobs", 5)) {
+        if (argc != 1) {
+            write(STDERR_FILENO, "jobs: syntax error\n", 20);
+        } else {
+            jobs(my_jobs);
         }
 
     } else {
@@ -215,12 +249,13 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
     // add job to job list
     add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
+    next_job++;
 
     if (bg) {
         // print job and process id
         char output[32];
-        snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
-        next_job++;
+        int job = get_job_jid(my_jobs, pid);
+        snprintf(output, 32, "[%d] (%d)\n", job, pid);
         checked_stdwrite(output);
     } else {
         checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
@@ -314,7 +349,7 @@ int main() {
         pid_t pid;
         int status;
         if ((pid = checked_waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
-            handle_signals(status, pid);
+            reap(status, pid);
         }
 
     } while (1);  // continues until ctrl+D is pressed or other fatal error
