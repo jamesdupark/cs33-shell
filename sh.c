@@ -31,25 +31,24 @@ int next_job = 1;
  * or was stopped due to a signal, uses the signal macros to identify and report
  * it.
  */
-void handle_signals(int status, pid_t pgid) {
+void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
-    int job = get_job_jid(my_jobs, pgid);
+    int job;
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
         sig = WTERMSIG(status);
         act = "terminated by signal";
 
-        // delete job from list
-        remove_job_pid(my_jobs, pgid);
+        job = next_job;
     } else if (WIFSTOPPED(status)) { // process stopped by signal
         sig = WSTOPSIG(status);
         act = "suspended by signal";
 
-        // update job
-        update_job_pid(my_jobs, pgid, STOPPED);
-    } else if (WIFEXITED(status)) {
-        remove_job_pid(my_jobs, pgid);
-    }
+        // add job to list
+        add_job(my_jobs, next_job, pgid, STOPPED, cmd);
+        job = next_job;
+        next_job++;
+    } 
 
     if (sig) { // there was some signal sent
         // print message
@@ -64,7 +63,19 @@ void reap(int status, pid_t pgid) {
     char act[32];
     int job = get_job_jid(my_jobs, pgid);
 
-    if (WIFCONTINUED(status)) {
+    if (WIFSIGNALED(status)) { // process terminated by signal
+        code = WTERMSIG(status);
+        snprintf(act, "terminated by signal %d", code);
+
+        // remove job from list
+        remove_job_pid(my_jobs, pgid);
+    } else if (WIFSTOPPED(status)) { // process stopped by signal
+        sig = WSTOPSIG(status);
+        snprintf(act, "suspended by signal %d", code);
+
+        // update job status
+        update_job_pid(my_jobs, pgid, STOPPED);
+    } else if (WIFCONTINUED(status)) {
         code = 1;
         snprintf(act, 16, "resumed");
 
@@ -83,9 +94,6 @@ void reap(int status, pid_t pgid) {
         snprintf(output, 64, "[%d] (%d) %s\n", job, pgid, act);
         checked_stdwrite(output);
     }
-
-    // handle signals we have already implemented checks for
-    handle_signals(status, pgid);
 }
 
 /*
@@ -256,19 +264,20 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    // add job to job list
-    add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
-    next_job++;
+    
 
     if (bg) {
         // print job and process id
         char output[32];
+        // add job to job list
+        add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
+        next_job++;
         int job = get_job_jid(my_jobs, pid);
         snprintf(output, 32, "[%d] (%d)\n", job, pid);
         checked_stdwrite(output);
     } else {
         checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
-        handle_signals(status, pid);
+        handle_signals(status, pid, tokens[f_index]);
     }
 
     // return terminal control to parent
