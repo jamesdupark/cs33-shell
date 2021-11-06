@@ -229,6 +229,8 @@ int parse(char buffer[1024], char *tokens[512], char *argv[512], int redir[4]) {
 
     if (!strncmp(argv[i - 2], "&", 2)) {
         redir[3] = 1; // launch process in bg
+        i--;
+        argv[i - 1] = NULL;
     }
 
     return i - 1;  // i = number of elements in argv including final null
