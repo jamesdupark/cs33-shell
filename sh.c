@@ -366,7 +366,7 @@ int main() {
 
         pid_t pid;
         int status;
-        if ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
+        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED))) {
             reap(status, pid);
         }
 
