@@ -104,11 +104,10 @@ int exec_builtins(char *argv[512], int argc) {
  * - Description: Attempts to run execv within a child process with the given
  * argv. Supports i/o redirection.
  *
- * - Arguments: argv: array of pointers to parsed arguments, argc: the number of
- * arguments in argv, tokens: array of pointers to parsed tokens (including 
- * redirection symbols and files), redir: array of ints indicating the index of 
- * the redirection file for input, output, or appending respectively within the 
- * tokens array.
+ * - Arguments: argv: array of pointers to parsed arguments, tokens: array of 
+ * pointers to parsed tokens (including redirection symbols and files), redir: 
+ * array of ints indicating the index of the redirection file for input, output,
+ * or appending respectively within the tokens array.
  *
  * - Usage: argv[0] should contain the name of the binary file to be executed,
  * preceded by a "/" (to prevent conflict with builtins with the same name).
@@ -264,7 +263,7 @@ int main() {
         // execute builtins
         if (exec_builtins(argv, argc) < 0) {
             // if argv[0] not a builtin: attempt to execute program
-            run_prog(argv, argc, tokens, redir);
+            run_prog(argv, tokens, redir);
         }
 
     } while (1);  // continues until ctrl+D is pressed or other fatal error

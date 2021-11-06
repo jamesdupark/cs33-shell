@@ -17,7 +17,7 @@ job_list_t *my_jobs;
  *
  */
 void checked_stdwrite(char* str) {
-    int len = strnlen(str, 1024);
+    size_t len = strnlen(str, 1024);
     if (write(STDOUT_FILENO, str, len) < 0) {
         perror("write:");
         cleanup_job_list(my_jobs);
