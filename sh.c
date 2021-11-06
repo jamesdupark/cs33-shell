@@ -17,6 +17,7 @@ int next_job = 1;
 
 
 
+
 /*
  * change_def_handlers()
  * 
@@ -181,17 +182,16 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
         next_job++;
         checked_stdwrite(output);
-    
-
-        pid_t old;
-        if ((old = getpgrp()) < 0) {
-            perror("getpgid");
-            return -1;
-        }
     } else {
         checked_waitpid(pid, &status, 0); // TODO: think about other option values?
     }
 
+    // return terminal control to parent
+    pid_t old;
+    if ((old = getpgrp()) < 0) {
+        perror("getpgid");
+        return -1;
+    }
 
     checked_setpgrp(old);
 
