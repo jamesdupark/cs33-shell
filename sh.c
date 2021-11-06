@@ -60,18 +60,18 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
 
 void reap(int status, pid_t pgid) {
     int code = 0;
-    char act[32];
+    char act[64];
     int job = get_job_jid(my_jobs, pgid);
 
     if (WIFSIGNALED(status)) { // process terminated by signal
         code = WTERMSIG(status);
-        snprintf(act, "terminated by signal %d", code);
+        snprintf(act, 32, "terminated by signal %d", code);
 
         // remove job from list
         remove_job_pid(my_jobs, pgid);
     } else if (WIFSTOPPED(status)) { // process stopped by signal
         sig = WSTOPSIG(status);
-        snprintf(act, "suspended by signal %d", code);
+        snprintf(act, 32,  "suspended by signal %d", code);
 
         // update job status
         update_job_pid(my_jobs, pgid, STOPPED);
@@ -83,7 +83,7 @@ void reap(int status, pid_t pgid) {
         update_job_pid(my_jobs, pgid, RUNNING);
     } else if (WIFEXITED(status)) {
         code = WEXITSTATUS(status);
-        snprintf(act, 32, "terminated with exit status %d", code);
+        snprintf(act, 64, "terminated with exit status %d", code);
 
         // remove from job list
         remove_job_pid(my_jobs, pgid);
