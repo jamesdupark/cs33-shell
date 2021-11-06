@@ -172,7 +172,7 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    if (bg) {
+    if (!bg) {
         // add job to job list
         add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
 
@@ -181,15 +181,17 @@ int run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         snprintf(output, 32, "[%d] (%d)\n", next_job, pid);
         next_job++;
         checked_stdwrite(output);
+    
+
+        pid_t old;
+        if ((old = getpgrp()) < 0) {
+            perror("getpgid");
+            return -1;
+        }
     } else {
         checked_waitpid(pid, &status, 0); // TODO: think about other option values?
     }
 
-    pid_t old;
-    if ((old = getpgrp()) < 0) {
-        perror("getpgid");
-        return -1;
-    }
 
     checked_setpgrp(old);
 
