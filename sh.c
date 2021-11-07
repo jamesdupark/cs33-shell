@@ -232,7 +232,8 @@ int exec_builtins(char *argv[512], int argc) {
                 // give terminal control to child
                 checked_setpgrp(pid);
 
-                checked_waitpid(pid, &status, WUNTRACED);  // wait
+                // wait for child to terminate or moved to bg
+                checked_waitpid(pid, &status, WUNTRACED);
                 handle_signals(status, pid, NULL);
 
                 // take terminal control from child
