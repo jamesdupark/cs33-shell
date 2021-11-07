@@ -41,6 +41,8 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
 
         if (job < 0) { // job is new
             job = next_job;
+        } else {
+            remove_job_pid(my_jobs, pgid);
         }
     } else if (WIFSTOPPED(status)) { // process stopped by signal
         sig = WSTOPSIG(status);
@@ -51,6 +53,8 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
             add_job(my_jobs, next_job, pgid, STOPPED, cmd);
             job = next_job;
             next_job++;
+        } else {
+            update_job_pid(my_jobs, pgid, STOPPED);
         }
     } else if (WIFEXITED(status) && job > 0) {
         // remove job from job list
