@@ -31,9 +31,10 @@ int next_job = 1;
  * or was stopped due to a signal, uses the signal macros to identify and report
  * it.
  */
-void handle_signals(int status, pid_t pgid, char *cmd) {
+void handle_signals(int status, pid_t pid, char *cmd) {
     char *act;
-    int job = get_job_pid(my_jobs, pgid);
+    
+    int job = get_job_jid(my_jobs, pgid);
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
         sig = WTERMSIG(status);
@@ -230,13 +231,7 @@ int exec_builtins(char *argv[512], int argc) {
                 handle_signals(status, pid, NULL);
 
                 // take terminal control from child
-                pid_t old;
-                if ((old = getpgrp()) < 0) {
-                    perror("getpgid");
-                    cleanup_job_list(my_jobs);
-                    exit(1);
-                }
-
+                pid_t old = getpgrp()
                 checked_setpgrp(old);
             }
         }
@@ -369,13 +364,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     }
 
     // return terminal control to parent
-    pid_t old;
-    if ((old = getpgrp()) < 0) {
-        perror("getpgid");
-        cleanup_job_list(my_jobs);
-        exit(1);
-    }
-
+    pid_t old = getpgrp()
     checked_setpgrp(old);
 
     return 0;
