@@ -54,7 +54,7 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
         }
     } else if (WIFEXITED(status) && job > 0) {
         // remove job from job list
-        remove_job_pid(my_jobs, pid);
+        remove_job_pid(my_jobs, pgid);
     }
 
     if (sig) { // there was some signal sent
