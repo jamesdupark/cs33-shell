@@ -203,8 +203,8 @@ int exec_builtins(char *argv[512], int argc) {
         //builtin recognized as fg
     } else if (!strncmp(cmd, "fg", 3)) {
         if (argc != 2) {
-            write(STDERR_FIELNO, "fg: syntax error\n", 18);
-        } else if (argv[1] != '%') {
+            write(STDERR_FILENO, "fg: syntax error\n", 18);
+        } else if (*argv[1] != '%') { // leading %
             write(STDERR_FILENO, "fg: job input does not begin with %\n", 37);
         } else {
             // get jid
@@ -220,7 +220,7 @@ int exec_builtins(char *argv[512], int argc) {
             } else {
                 kill(pid, SIGCONT); // continue
                 update_job_pid(my_jobs, pid, RUNNING); // update job list
-                checked_waitpid(pid, &status, WUNTRACED);
+                checked_waitpid(pid, &status, WUNTRACED); // wait
                 handle_signals(status, pid, NULL);
             }
         }
@@ -228,8 +228,8 @@ int exec_builtins(char *argv[512], int argc) {
         //builtin recognized as bg
     } else if (!strncmp(cmd, "bg", 3)) {
         if (argc != 2) {
-            write(STDERR_FIELNO, "bg: syntax error\n", 18);
-        } else if (argv[1] != '%') {
+            write(STDERR_FILENO, "bg: syntax error\n", 18);
+        } else if (*argv[1] != '%') { // leading %
             write(STDERR_FILENO, "bg: job input does not begin with %\n", 37);
         } else {
             // get jid
