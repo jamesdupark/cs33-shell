@@ -218,7 +218,7 @@ int exec_builtins(char *argv[512], int argc) {
             if ((pid = get_job_pid(my_jobs, jid)) < 0) {
                 write(STDERR_FILENO, "job not found\n", 15);
             } else {
-                kill(pid, SIGCONT); // continue
+                kill(-pid, SIGCONT); // continue
                 update_job_pid(my_jobs, pid, RUNNING); // update job list
                 checked_waitpid(pid, &status, WUNTRACED); // wait
                 handle_signals(status, pid, NULL);
@@ -242,11 +242,10 @@ int exec_builtins(char *argv[512], int argc) {
             if ((pid = get_job_pid(my_jobs, jid)) < 0) {
                 write(STDERR_FILENO, "job not found\n", 15);
             } else {
-                kill(pid, SIGCONT); // continue
+                kill(-pid, SIGCONT); // continue
                 update_job_pid(my_jobs, pid, RUNNING); // update job list
             }
         }
-
     } else {
         // builtin not recognized, try execv
         return -1;
