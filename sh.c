@@ -258,13 +258,6 @@ int exec_builtins(char *argv[512], int argc) {
             } else {
                 kill(-pid, SIGCONT);                    // continue
                 update_job_pid(my_jobs, pid, RUNNING);  // update job list
-
-                // reap
-                // int status;
-                // while ((pid = waitpid(-pid, &status, WNOHANG | WUNTRACED |
-                // WCONTINUED)) > 0) {
-                //     reap(status, pid);
-                // }
             }
         }
     } else {
@@ -322,7 +315,6 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
             checked_setpgrp(pid);
         }
 
-        // TODO: later... set up other signal handlers?
         // reset signal handlers to default
         change_def_handlers(SIG_DFL);
 
