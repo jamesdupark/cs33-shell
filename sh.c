@@ -220,8 +220,21 @@ int exec_builtins(char *argv[512], int argc) {
             } else {
                 kill(-pid, SIGCONT); // continue
                 update_job_pid(my_jobs, pid, RUNNING); // update job list
+                // give terminal control to child
+                checked_setpgrp(pid);
+
                 checked_waitpid(pid, &status, WUNTRACED); // wait
                 handle_signals(status, pid, NULL);
+
+                // take terminal control from child
+                pid_t old;
+                if ((old = getpgrp()) < 0) {
+                    perror("getpgid");
+                    cleanup_job_list(my_jobs);
+                    exit(1);
+                }
+
+                checked_setpgrp(old);
             }
         }
 
