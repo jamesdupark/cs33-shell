@@ -18,7 +18,7 @@ int next_job = 1;
 /*
  * handle_signals()
  * 
- * - Description: Handles asynchronous signals sent to child processes of the
+ * - Description: Handles asynchronous signals sent to foreground processes
  * shell by printing an informative message about what the signal was and what
  * it did
  * 
@@ -33,21 +33,25 @@ int next_job = 1;
  */
 void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
-    int job;
+    int job = get_job_pid(my_jobs, pgid);
     int sig = 0; // there is no zero signal
     if (WIFSIGNALED(status)) { // process terminated by signal
         sig = WTERMSIG(status);
         act = "terminated by signal";
 
-        job = next_job;
+        if (job < 0) { // job is new
+            job = next_job;
+        }
     } else if (WIFSTOPPED(status)) { // process stopped by signal
         sig = WSTOPSIG(status);
         act = "suspended by signal";
 
-        // add job to list
-        add_job(my_jobs, next_job, pgid, STOPPED, cmd);
-        job = next_job;
-        next_job++;
+        if (job < 0) { // job is new
+            // add job to list
+            add_job(my_jobs, next_job, pgid, STOPPED, cmd);
+            job = next_job;
+            next_job++;
+        }
     } 
 
     if (sig) { // there was some signal sent
@@ -58,6 +62,21 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
     }
 }
 
+/*
+ * reap()
+ * 
+ * - Description: Called whenever a child process (background) has changed state
+ * in order to report change in process state and reap zombie processes that
+ * have terminated
+ * 
+ * - Arguments: status: int containing status information as set by waitpid()
+ * 
+ * - Usage: called after a positive (some child process) return to waitpid()
+ * with the -1 (all child processes) argument and the WNOHANG, WUNTRACED, and
+ * WIFCONTINUED flags. Reports the change in the process state and updates job
+ * list appropriately.
+ *
+ */
 void reap(int status, pid_t pgid) {
     int code = 0;
     char act[64];
@@ -181,6 +200,53 @@ int exec_builtins(char *argv[512], int argc) {
             jobs(my_jobs);
         }
 
+        //builtin recognized as fg
+    } else if (!strncmp(cmd, "fg", 3)) {
+        if (argc != 2) {
+            write(STDERR_FIELNO, "fg: syntax error\n", 18);
+        } else if (argv[1] != '%') {
+            write(STDERR_FILENO, "fg: job input does not begin with %\n", 37);
+        } else {
+            // get jid
+            char *jid_str = argv[1];
+            jid_str++;
+            int jid = atoi(jid_str); // some number or -1
+
+            // get pid
+            pid_t pid;
+            int status;
+            if ((pid = get_job_pid(my_jobs, jid)) < 0) {
+                write(STDERR_FILENO, "job not found\n", 15);
+            } else {
+                kill(pid, SIGCONT); // continue
+                update_job_pid(my_jobs, pid, RUNNING); // update job list
+                checked_waitpid(pid, &status, WUNTRACED);
+                handle_signals(status, pid, NULL);
+            }
+        }
+
+        //builtin recognized as bg
+    } else if (!strncmp(cmd, "bg", 3)) {
+        if (argc != 2) {
+            write(STDERR_FIELNO, "bg: syntax error\n", 18);
+        } else if (argv[1] != '%') {
+            write(STDERR_FILENO, "bg: job input does not begin with %\n", 37);
+        } else {
+            // get jid
+            char *jid_str = argv[1];
+            jid_str++;
+            int jid = atoi(jid_str); // some number or -1
+
+            // get pid
+            pid_t pid;
+            if ((pid = get_job_pid(my_jobs, jid)) < 0) {
+                write(STDERR_FILENO, "job not found\n", 15);
+            } else {
+                kill(pid, SIGCONT); // continue
+                update_job_pid(my_jobs, pid, RUNNING); // update job list
+            }
+        }
+
     } else {
         // builtin not recognized, try execv
         return -1;
@@ -265,19 +331,19 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    
-
-    if (bg) {
-        // print job and process id
-        char output[32];
+    if (bg) { // job set up in background
         // add job to job list
         add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
         next_job++;
+
+        // print job and process id
+        char output[32];
         int job = get_job_jid(my_jobs, pid);
         snprintf(output, 32, "[%d] (%d)\n", job, pid);
         checked_stdwrite(output);
     } else {
-        checked_waitpid(pid, &status, WUNTRACED); // TODO: think about other option values?
+        // wait for child process
+        checked_waitpid(pid, &status, WUNTRACED);
         handle_signals(status, pid, tokens[f_index]);
     }
 
@@ -324,6 +390,7 @@ int main() {
         char *argv[512];
         memset(argv, 0, 512 * sizeof(char *));
 
+        // check for changes in child process status and reap zombie processes
         pid_t pid;
         int status;
         while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {

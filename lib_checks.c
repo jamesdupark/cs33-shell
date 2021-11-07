@@ -113,14 +113,14 @@ void checked_setpgrp(pid_t pgrp) {
  * 
  * - Description: calls waipid on the given inputs and prints an error message
  * if it fails and exits the program. Returns the pid of the relevant process
- * otherwise.
+ * otherwise. Not compatible with the WNOHANG flag (exits if no children found)
  * 
  * - Arguments: pid: process id of the process to wait for, status: pointer to
  * an uninitialized int that can be used to store the status of the wait
  * operation, options: options for waitpid
  * 
  * - Usage: automates the error-checking process of the library function 
- *              waitpid(). Check man waitpid for more info
+ *              waitpid(). Check man waitpid for more info.
  * 
  */
 pid_t checked_waitpid(pid_t pid, int *status, int options) {
