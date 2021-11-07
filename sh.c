@@ -33,8 +33,8 @@ int next_job = 1;
  */
 void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
-    int job = get_job_jid(my_jobs, pgid);
-    int sig = 0;                // there is no zero signal
+    int job = get_job_jid(my_jobs, pgid); // returns -1 if job not found
+    int sig = 0;
     if (WIFSIGNALED(status)) {  // process terminated by signal
         sig = WTERMSIG(status);
         act = "terminated by signal";
@@ -42,6 +42,7 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
         if (job < 0) {  // job is new
             job = next_job;
         } else {
+            // update job in job list
             remove_job_pid(my_jobs, pgid);
         }
     } else if (WIFSTOPPED(status)) {  // process stopped by signal
@@ -54,6 +55,7 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
             job = next_job;
             next_job++;
         } else {
+            // update job in job list
             update_job_pid(my_jobs, pgid, STOPPED);
         }
     } else if (WIFEXITED(status) && job > 0) {
@@ -146,9 +148,9 @@ void change_def_handlers(__sighandler_t handler) {
  * exec_builtins()
  *
  * - Description: takes in the current argv array and argc count and attempts to
- * execute one of the supported builtin commands cd, ln, rm, or exit. Returns 0
- * if a command was attempted, -1 if the command was not recognized as one of
- * the builtins.
+ * execute one of the supported builtin commands jobs, fg, bg, cd, ln, rm, or 
+ * exit. Returns 0 if a command was attempted, -1 if the command was not 
+ * recognized as one of the builtins.
  *
  * - Arguments: argv: an array of pointers to parsed arguments, argc: an int
  * representing the number of arguments
@@ -273,18 +275,23 @@ int exec_builtins(char *argv[512], int argc) {
  * run_prog()
  *
  * - Description: Attempts to run execv within a child process with the given
- * argv. Supports i/o redirection.
+ * argv. Supports i/o redirection and the & operator, which launches a job in
+ * the background.
  *
  * - Arguments: argv: array of pointers to parsed arguments, tokens: array of
  * pointers to parsed tokens (including redirection symbols and files), redir:
  * array of ints indicating the index of the redirection file for input, output,
- * or appending respectively within the tokens array.
+ * or appending respectively within the tokens array, along with an int 
+ * representing a boolean for whether the job should be launched in the 
+ * background or not.
  *
  * - Usage: argv[0] should contain the name of the binary file to be executed,
  * preceded by a "/" (to prevent conflict with builtins with the same name).
  * The other elements of argv should be the inputs for the executable in
  * question. If redirects are desired, tokens should contain the input, output,
- * and/or append filepaths at the indices specified in redir.
+ * and/or append filepaths at the indices specified in redir. Redir[3] contains
+ * information about whether or not the job should be launched in the foreground
+ * or background.
  */
 int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     pid_t pid;
@@ -370,15 +377,17 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
  * main()
  *
  * - Description: Sets up and executes a fully funcitonal REPL shell with built-
- * in commands rm, ln, cd, and exit with extensive error-checking. Attempts to
- * execute commands that do not correspond to builtins.
+ * in commands rm, ln, cd, bg, fg, jobs, and exit. Attempts to execute commands 
+ * that do not correspond to builtins.
  *
  * - Arguments: none
  *
- * - Usage: type in commands to the REPL like you normall would in a shell!
+ * - Usage: type in commands to the REPL like you normally would in a shell!
  *          supports cd, rm, ln, exit, exiting with ctrl+D, and executing
  *          programs with execv, along with file redirection using "<", ">", and
- *          ">>".
+ *          ">>". Also supports signal handling, launching jobs in the 
+ *          background with the ampersand ("&") operator, and moving jobs from
+ *          the foreground to background.
  */
 int main() {
     my_jobs = init_job_list();
