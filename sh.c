@@ -244,6 +244,12 @@ int exec_builtins(char *argv[512], int argc) {
             } else {
                 kill(-pid, SIGCONT); // continue
                 update_job_pid(my_jobs, pid, RUNNING); // update job list
+                
+                // reap
+                int status;
+                while ((pid = waitpid(-pid, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+                    reap(status, pid);
+                }
             }
         }
     } else {
