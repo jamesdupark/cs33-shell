@@ -324,6 +324,12 @@ int main() {
         char *argv[512];
         memset(argv, 0, 512 * sizeof(char *));
 
+        pid_t pid;
+        int status;
+        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+            reap(status, pid);
+        }
+
         // prompt user input
         #ifdef PROMPT
                 checked_stdwrite("mysh> ");
@@ -363,12 +369,6 @@ int main() {
         if (exec_builtins(argv, argc) < 0) {
             // if argv[0] not a builtin: attempt to execute program
             run_prog(argv, tokens, redir);
-        }
-
-        pid_t pid;
-        int status;
-        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
-            reap(status, pid);
         }
 
     } while (1);  // continues until ctrl+D is pressed or other fatal error
