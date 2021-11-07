@@ -230,7 +230,7 @@ int exec_builtins(char *argv[512], int argc) {
                 handle_signals(status, pid, NULL);
 
                 // take terminal control from child
-                pid_t old = getpgrp()
+                pid_t old = getpgrp();
                 checked_setpgrp(old);
             }
         }
@@ -363,7 +363,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     }
 
     // return terminal control to parent
-    pid_t old = getpgrp()
+    pid_t old = getpgrp();
     checked_setpgrp(old);
 
     return 0;
