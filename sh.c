@@ -33,7 +33,7 @@ int next_job = 1;
  */
 void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
-    int job = get_job_jid(my_jobs, pgid); // returns -1 if job not found
+    int job = get_job_jid(my_jobs, pgid);  // returns -1 if job not found
     int sig = 0;
     if (WIFSIGNALED(status)) {  // process terminated by signal
         sig = WTERMSIG(status);
@@ -148,8 +148,8 @@ void change_def_handlers(__sighandler_t handler) {
  * exec_builtins()
  *
  * - Description: takes in the current argv array and argc count and attempts to
- * execute one of the supported builtin commands jobs, fg, bg, cd, ln, rm, or 
- * exit. Returns 0 if a command was attempted, -1 if the command was not 
+ * execute one of the supported builtin commands jobs, fg, bg, cd, ln, rm, or
+ * exit. Returns 0 if a command was attempted, -1 if the command was not
  * recognized as one of the builtins.
  *
  * - Arguments: argv: an array of pointers to parsed arguments, argc: an int
@@ -281,8 +281,8 @@ int exec_builtins(char *argv[512], int argc) {
  * - Arguments: argv: array of pointers to parsed arguments, tokens: array of
  * pointers to parsed tokens (including redirection symbols and files), redir:
  * array of ints indicating the index of the redirection file for input, output,
- * or appending respectively within the tokens array, along with an int 
- * representing a boolean for whether the job should be launched in the 
+ * or appending respectively within the tokens array, along with an int
+ * representing a boolean for whether the job should be launched in the
  * background or not.
  *
  * - Usage: argv[0] should contain the name of the binary file to be executed,
@@ -377,7 +377,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
  * main()
  *
  * - Description: Sets up and executes a fully funcitonal REPL shell with built-
- * in commands rm, ln, cd, bg, fg, jobs, and exit. Attempts to execute commands 
+ * in commands rm, ln, cd, bg, fg, jobs, and exit. Attempts to execute commands
  * that do not correspond to builtins.
  *
  * - Arguments: none
@@ -385,7 +385,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
  * - Usage: type in commands to the REPL like you normally would in a shell!
  *          supports cd, rm, ln, exit, exiting with ctrl+D, and executing
  *          programs with execv, along with file redirection using "<", ">", and
- *          ">>". Also supports signal handling, launching jobs in the 
+ *          ">>". Also supports signal handling, launching jobs in the
  *          background with the ampersand ("&") operator, and moving jobs from
  *          the foreground to background.
  */
