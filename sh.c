@@ -308,10 +308,8 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
     if ((pid = fork()) == 0) {  // start child process
         // change pgid
-        if ((pid = getpid()) < 0) {
-            perror("getpid");  // no need to clean up job list in child process
-            exit(1);
-        } else if (setpgid(pid, pid) < 0) {
+        pid = getpid();
+        if (setpgid(pid, pid) < 0) {
             perror("setpgid");
             exit(1);
         }
