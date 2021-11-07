@@ -1,4 +1,5 @@
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,10 +7,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <signal.h>
-#include "parsing.h"
-#include "lib_checks.c"
 #include "jobs.h"
+#include "lib_checks.c"
+#include "parsing.h"
 
 // initialize our job list
 job_list_t *my_jobs;
@@ -17,16 +17,16 @@ int next_job = 1;
 
 /*
  * handle_signals()
- * 
+ *
  * - Description: Handles asynchronous signals sent to foreground processes
  * shell by printing an informative message about what the signal was and what
  * it did
- * 
+ *
  * - Arguments: status: indicates the status of the child process as set by the
  * waitpid() function, pid: indicates the id of the child process group in
  * question, cmd: indicates the command used to create the child process (for
  * adding to jobs list)
- * 
+ *
  * - Usage: called after returning from waitpid(). If a child process terminated
  * or was stopped due to a signal, uses the signal macros to identify and report
  * it.
@@ -34,21 +34,21 @@ int next_job = 1;
 void handle_signals(int status, pid_t pgid, char *cmd) {
     char *act;
     int job = get_job_jid(my_jobs, pgid);
-    int sig = 0; // there is no zero signal
-    if (WIFSIGNALED(status)) { // process terminated by signal
+    int sig = 0;                // there is no zero signal
+    if (WIFSIGNALED(status)) {  // process terminated by signal
         sig = WTERMSIG(status);
         act = "terminated by signal";
 
-        if (job < 0) { // job is new
+        if (job < 0) {  // job is new
             job = next_job;
         } else {
             remove_job_pid(my_jobs, pgid);
         }
-    } else if (WIFSTOPPED(status)) { // process stopped by signal
+    } else if (WIFSTOPPED(status)) {  // process stopped by signal
         sig = WSTOPSIG(status);
         act = "suspended by signal";
 
-        if (job < 0) { // job is new
+        if (job < 0) {  // job is new
             // add job to list
             add_job(my_jobs, next_job, pgid, STOPPED, cmd);
             job = next_job;
@@ -61,7 +61,7 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
         remove_job_pid(my_jobs, pgid);
     }
 
-    if (sig) { // there was some signal sent
+    if (sig) {  // there was some signal sent
         // print message
         char output[64];
         snprintf(output, 64, "[%d] (%d) %s %d\n", job, pgid, act, sig);
@@ -71,13 +71,13 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
 
 /*
  * reap()
- * 
+ *
  * - Description: Called whenever a child process (background) has changed state
  * in order to report change in process state and reap zombie processes that
  * have terminated
- * 
+ *
  * - Arguments: status: int containing status information as set by waitpid()
- * 
+ *
  * - Usage: called after a positive (some child process) return to waitpid()
  * with the -1 (all child processes) argument and the WNOHANG, WUNTRACED, and
  * WIFCONTINUED flags. Reports the change in the process state and updates job
@@ -89,15 +89,15 @@ void reap(int status, pid_t pgid) {
     char act[64];
     int job = get_job_jid(my_jobs, pgid);
 
-    if (WIFSIGNALED(status)) { // process terminated by signal
+    if (WIFSIGNALED(status)) {  // process terminated by signal
         code = WTERMSIG(status);
         snprintf(act, 32, "terminated by signal %d", code);
 
         // remove job from list
         remove_job_pid(my_jobs, pgid);
-    } else if (WIFSTOPPED(status)) { // process stopped by signal
+    } else if (WIFSTOPPED(status)) {  // process stopped by signal
         code = WSTOPSIG(status);
-        snprintf(act, 32,  "suspended by signal %d", code);
+        snprintf(act, 32, "suspended by signal %d", code);
 
         // update job status
         update_job_pid(my_jobs, pgid, STOPPED);
@@ -125,13 +125,13 @@ void reap(int status, pid_t pgid) {
 
 /*
  * change_def_handlers()
- * 
+ *
  * - Description: Sets the default behavior for SIGINT, SIGSTP, and SIGTTOU
  * according to the given handler
- * 
+ *
  * - Arguments: handler: sighandler that defines the new behavior for the three
  * signals (i.e. SIG_DFL, SIG_IGN)
- * 
+ *
  * - Usage: change_def_handlers(SIG_DFL) -> changes handlers for SIGINT, SIGTSTP
  * and SIGTTOU to default
  *
@@ -207,17 +207,17 @@ int exec_builtins(char *argv[512], int argc) {
             jobs(my_jobs);
         }
 
-        //builtin recognized as fg
+        // builtin recognized as fg
     } else if (!strncmp(cmd, "fg", 3)) {
         if (argc != 2) {
             write(STDERR_FILENO, "fg: syntax error\n", 18);
-        } else if (*argv[1] != '%') { // leading %
+        } else if (*argv[1] != '%') {  // leading %
             write(STDERR_FILENO, "fg: job input does not begin with %\n", 37);
         } else {
             // get jid
             char *jid_str = argv[1];
             jid_str++;
-            int jid = atoi(jid_str); // some number or -1
+            int jid = atoi(jid_str);  // some number or -1
 
             // get pid
             pid_t pid;
@@ -225,12 +225,12 @@ int exec_builtins(char *argv[512], int argc) {
             if ((pid = get_job_pid(my_jobs, jid)) < 0) {
                 write(STDERR_FILENO, "job not found\n", 15);
             } else {
-                kill(-pid, SIGCONT); // continue
-                update_job_pid(my_jobs, pid, RUNNING); // update job list
+                kill(-pid, SIGCONT);                    // continue
+                update_job_pid(my_jobs, pid, RUNNING);  // update job list
                 // give terminal control to child
                 checked_setpgrp(pid);
 
-                checked_waitpid(pid, &status, WUNTRACED); // wait
+                checked_waitpid(pid, &status, WUNTRACED);  // wait
                 handle_signals(status, pid, NULL);
 
                 // take terminal control from child
@@ -239,29 +239,30 @@ int exec_builtins(char *argv[512], int argc) {
             }
         }
 
-        //builtin recognized as bg
+        // builtin recognized as bg
     } else if (!strncmp(cmd, "bg", 3)) {
         if (argc != 2) {
             write(STDERR_FILENO, "bg: syntax error\n", 18);
-        } else if (*argv[1] != '%') { // leading %
+        } else if (*argv[1] != '%') {  // leading %
             write(STDERR_FILENO, "bg: job input does not begin with %\n", 37);
         } else {
             // get jid
             char *jid_str = argv[1];
             jid_str++;
-            int jid = atoi(jid_str); // some number or -1
+            int jid = atoi(jid_str);  // some number or -1
 
             // get pid
             pid_t pid;
             if ((pid = get_job_pid(my_jobs, jid)) < 0) {
                 write(STDERR_FILENO, "job not found\n", 15);
             } else {
-                kill(-pid, SIGCONT); // continue
-                update_job_pid(my_jobs, pid, RUNNING); // update job list
-                
+                kill(-pid, SIGCONT);                    // continue
+                update_job_pid(my_jobs, pid, RUNNING);  // update job list
+
                 // reap
                 // int status;
-                // while ((pid = waitpid(-pid, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+                // while ((pid = waitpid(-pid, &status, WNOHANG | WUNTRACED |
+                // WCONTINUED)) > 0) {
                 //     reap(status, pid);
                 // }
             }
@@ -281,8 +282,8 @@ int exec_builtins(char *argv[512], int argc) {
  * - Description: Attempts to run execv within a child process with the given
  * argv. Supports i/o redirection.
  *
- * - Arguments: argv: array of pointers to parsed arguments, tokens: array of 
- * pointers to parsed tokens (including redirection symbols and files), redir: 
+ * - Arguments: argv: array of pointers to parsed arguments, tokens: array of
+ * pointers to parsed tokens (including redirection symbols and files), redir:
  * array of ints indicating the index of the redirection file for input, output,
  * or appending respectively within the tokens array.
  *
@@ -308,7 +309,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
     if ((pid = fork()) == 0) {  // start child process
         // change pgid
         if ((pid = getpid()) < 0) {
-            perror("getpid"); // no need to clean up job list in child process
+            perror("getpid");  // no need to clean up job list in child process
             exit(1);
         } else if (setpgid(pid, pid) < 0) {
             perror("setpgid");
@@ -317,7 +318,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
 
         // set terminal control group to pid if this is a fg job
         // TODO: if (!command ends with & symbol)
-        if (!bg) { // give terminal control to foreground processes
+        if (!bg) {  // give terminal control to foreground processes
             checked_setpgrp(pid);
         }
 
@@ -326,7 +327,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         change_def_handlers(SIG_DFL);
 
         // set up redirection
-        if (redir[0]) {         // input redirection
+        if (redir[0]) {  // input redirection
             checked_close(STDIN_FILENO);
             checked_open(tokens[redir[0]], O_RDONLY, 0);
         }
@@ -350,7 +351,7 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
         exit(1);
     }
 
-    if (bg) { // job set up in background
+    if (bg) {  // job set up in background
         // add job to job list
         add_job(my_jobs, next_job, pid, RUNNING, tokens[f_index]);
         next_job++;
@@ -388,7 +389,6 @@ int *run_prog(char *argv[512], char *tokens[512], int redir[4]) {
  *          ">>".
  */
 int main() {
-
     my_jobs = init_job_list();
 
     do {
@@ -406,14 +406,15 @@ int main() {
         // check for changes in child process status and reap zombie processes
         pid_t pid;
         int status;
-        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+        while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) >
+               0) {
             reap(status, pid);
         }
 
-        // prompt user input
-        #ifdef PROMPT
-                checked_stdwrite("mysh> ");
-        #endif
+// prompt user input
+#ifdef PROMPT
+        checked_stdwrite("mysh> ");
+#endif
 
         // read in commands
         ssize_t rd_state;
