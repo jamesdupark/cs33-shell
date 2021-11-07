@@ -52,7 +52,10 @@ void handle_signals(int status, pid_t pgid, char *cmd) {
             job = next_job;
             next_job++;
         }
-    } 
+    } else if (WIFEXITED(status) && job > 0) {
+        // remove job from job list
+        remove_job_pid(my_jobs, pid);
+    }
 
     if (sig) { // there was some signal sent
         // print message
